@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment</title>
+</head>
+<body>
+    <h1>Payment Page</h1>
+
+    <button onclick="handlePaymentSuccess()">Payment Successful</button>
+    <button onclick="handlePaymentFailed()">Payment Failed</button>
+    <button onclick="handlePaymentCancel()">Cancel</button>
+
+    <script>
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const bookingId = urlParams.get('bookingId');
+
+        function handlePaymentSuccess() {
+            fetch(`http://localhost:3000/payment/success/${bookingId}`, {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    alert('Payment successful!');
+                    window.location.href = "success.html";
+                } else {
+                    throw new Error('Failed to update booking status');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                // Handle error
+            });
+        }
+
+        function handlePaymentFailed() {
+            fetch(`http://localhost:3000/payment/failed/${bookingId}`, {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    alert('Payment failed!');
+                    window.location.href = "failed.html";
+                } else {
+                    throw new Error('Failed to update booking status');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                // Handle error
+            });
+        }
+
+        function handlePaymentCancel() {
+            fetch(`http://localhost:3000/payment/cancel/${bookingId}`, {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    alert('Payment canceled!');
+                    window.location.href = "index.html";
+                } else {
+                    throw new Error('Failed to update booking status');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                // Handle error
+            });
+        }
+    </script>
+</body>
+</html>
