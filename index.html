@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Seat Booking</title>
+    <script src="https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/umd/uuidv4.min.js"></script>
+    <style>
+        @import url("https://fonts.googleapis.com/css?family=Lato&display=swap");
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #242333;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: "Lato", sans-serif;
+            margin: 0;
+        }
+
+        .movie-container {
+            margin: 20px 0;
+        }
+
+        .movie-container select {
+            background-color: #fff;
+            border: 0;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-left: 10px;
+            padding: 5px 15px 5px 15px;
+            -moz-appearance: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .container {
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+
+        .seat {
+            background-color: #444451;
+            height: 26px;
+            width: 32px;
+            margin: 3px;
+            font-size: 50px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        .seat.selected {
+            background-color: green;
+        }
+
+        .seat.sold {
+            background-color: #fff;
+        }
+
+        .seat:nth-of-type(2) {
+            margin-right: 18px;
+        }
+
+        .seat:nth-last-of-type(2) {
+            margin-left: 18px;
+        }
+
+        .seat:not(.sold):hover {
+            cursor: pointer;
+            transform: scale(1.2);
+        }
+
+        .showcase .seat:not(.sold):hover {
+            cursor: default;
+            transform: scale(1);
+        }
+
+        .showcase {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #777;
+            list-style-type: none;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .showcase li {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+        }
+
+        .showcase li small {
+            margin-left: 2px;
+        }
+
+        .row {
+            display: flex;
+        }
+
+        .screen {
+            background-color: #fff;
+            height: 120px;
+            width: 100%;
+            margin: 15px 0;
+            transform: rotateX(-48deg);
+            box-shadow: 0 3px 10px rgba(255, 255, 255, 0.7);
+        }
+
+        p.text {
+            margin: 5px 0;
+        }
+
+        p.text span {
+            color: rgb(158, 248, 158);
+        }
+
+        /* Additional CSS for Next button */
+        .next-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .seat-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            color: #fff;
+            pointer-events: none;
+        }
+        
+        .selected-seats {
+            margin-top: 20px;
+            color: #fff;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="movie-container">
+        <label>Select a movie:</label>
+        <select id="movie">
+            <option value="220">Godzilla vs Kong (RS.220)</option>
+            <option value="320">Radhe (RS.320)</option>
+            <option value="250">RRR (RS.250)</option>
+            <option value="260">F9 (RS.260)</option>
+        </select>
+    </div>
+
+    <ul class="showcase">
+        <li>
+            <div class="seat"></div>
+            <small>Available</small>
+        </li>
+        <li>
+            <div class="seat selected"></div>
+            <small>Selected</small>
+        </li>
+        <li>
+            <div class="seat sold"></div>
+            <small>Sold</small>
+        </li>
+    </ul>
+
+    <div class="container">
+        <div class="screen"></div>
+
+        <div class="row">
+            <div class="seat" data-row="A" data-seat-number="1"></div>
+            
+           <div class="seat" data-row="A" data-seat-number="2"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+        </div>
+
+        <div class="row">
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat sold"></div>
+            <div class="seat sold"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+            <div class="seat"></div>
+        </div>
+        <!-- More rows can be added as per requirement -->
+    </div>
+
+    <p class="text">
+        You have selected <span id="count">0</span> seat for a price of RS.<span id="total">0</span>
+    </p>
+<div class="selected-seats">Selected Seats: </div>
+    <!-- Next button to proceed to payment page -->
+    <button class="next-button" onclick="proceedToPayment()">Next</button>
+ <script>
+       // Initialize variables
+        let selectedSeats = [];
+        let ticketPrice = 0;
+
+        // Function to update selected seat count and total price
+        function updateSelectedCount() {
+            const selectedSeatsCount = document.querySelectorAll('.row .seat.selected').length;
+            const totalPrice = selectedSeatsCount * ticketPrice;
+
+            // Update UI
+            document.getElementById('count').innerText = selectedSeatsCount;
+            document.getElementById('total').innerText = totalPrice;
+        }
+
+       // Inside the handleSeatSelection function
+function handleSeatSelection(seat) {
+    if (seat.classList.contains('selected')) {
+        // Seat already selected, deselect it
+        seat.classList.remove('selected');
+
+        // Remove from selectedSeats array
+        selectedSeats = selectedSeats.filter(selectedSeat => selectedSeat !== seat);
+
+        // Update selected seat count and total price
+        updateSelectedCount();
+    } else {
+        // Seat not selected, select it
+        seat.classList.add('selected');
+
+        // Add to selectedSeats array
+        selectedSeats.push(seat);
+
+        // Update selected seat count and total price
+        updateSelectedCount();
+    }
+
+    // Store selected seats in localStorage
+    localStorage.setItem('selectedSeats', JSON.stringify(selectedSeats.map(seat => seat.dataset.seatNumber)));
+    localStorage.setItem('selectedMoviePrice', ticketPrice);
+    
+    updateSelectedSeatsText(selectedSeats);
+}
+
+
+        // Function to handle movie selection
+        function handleMovieSelection() {
+            const movieSelect = document.getElementById('movie');
+            ticketPrice = parseInt(movieSelect.value);
+
+            // Update selected seat count and total price
+            updateSelectedCount();
+        }
+
+        // Function to update the text showing selected seats
+        function updateSelectedSeatsText(selectedSeats) {
+            const selectedSeatsText = selectedSeats.map(seat => {
+                const row = seat.getAttribute('data-row');
+                const seatNumber = seat.getAttribute('data-seat-number');
+                return row + seatNumber;
+            }).join(', ');
+            document.querySelector('.selected-seats').textContent = 'Selected Seats: ' + selectedSeatsText;
+        }
+
+        // Add event listeners
+const seats = document.querySelectorAll('.row .seat:not(.sold)');
+seats.forEach(seat => {
+    seat.addEventListener('click', () => handleSeatSelection(seat));
+    const seatNumber = document.createElement('div');
+    seatNumber.classList.add('seat-number');
+    const row = seat.getAttribute('data-row');    
+    const seatNumberValue = seat.getAttribute('data-seat-number');
+    seatNumber.textContent = `${row}${seatNumberValue}`; // Concatenate row and seat number
+    seat.appendChild(seatNumber);
+});
+
+const movieSelect = document.getElementById('movie');
+movieSelect.addEventListener('change', handleMovieSelection);
+
+
+    </script>
+
+    <script>
+function proceedToPayment() {
+    // Generate a unique booking ID using uuidv4 function
+    const bookingId = uuidv4();
+
+    // Retrieve selected seats and movie details
+    const selectedSeats = Array.from(document.querySelectorAll('.row .seat.selected')).map(seat => seat.dataset.row + seat.dataset.seatNumber);
+    const selectedMoviePrice = localStorage.getItem("selectedMoviePrice");
+
+    console.log("Selected Seats:", selectedSeats); // Add this console log statement
+
+    if (!selectedSeats || selectedSeats.length === 0) {
+        alert("Please select at least one seat before proceeding to payment.");
+        return;
+    }
+
+    fetch('http://192.168.1.35:3000/booking', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            bookingId: bookingId,
+            seatNumbers: selectedSeats,  // Change seatNumber to seatNumbers
+            price: selectedMoviePrice
+        })
+    }).then(response => {
+        if (response.ok) {
+            window.location.href = "payment.html";
+        } else {
+            throw new Error('Failed to store booking data');
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        // Handle error
+    });
+}
+
+
+</script>
+</body>
+</html>
